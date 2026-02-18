@@ -1,0 +1,18 @@
+# Database
+*.db
+*.sqlite
+
+# Logs & Dumps
+latest_trace.json
+debug_dump.json
+*.log
+
+# Secrets & Config
+config.json
+.env
+
+# Python Junk
+__pycache__/
+venv/
+.idea/
+.DS_Store
