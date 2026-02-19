@@ -3,7 +3,7 @@ from dagster import sensor, RunRequest, repository, define_asset_job, AssetSelec
 from dagster_dbt import dbt_assets, DbtCliResource
 
 # --- CONFIGURATION ---
-DB_PATH = "/path/to/print_history.db"  # Path to the shared volume
+DB_PATH = "/data/print_history.db"  # Path to the shared volume
 
 # --- 1. DEFINE THE DBT JOB ---
 # This assumes you have defined your dbt assets (standard Dagster+dbt setup)

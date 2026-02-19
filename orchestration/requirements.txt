@@ -1,0 +1,6 @@
+dagster
+dagster-webserver
+dagster-dbt
+dbt-core
+dbt-sqlite
+pandas
