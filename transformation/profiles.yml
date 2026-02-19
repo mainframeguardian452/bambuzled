@@ -1,0 +1,8 @@
+bambu_print_history:
+  target: dev
+  outputs:
+    dev:
+      type: sqlite
+      database: "/data/print_history.db" # The shared volume path
+      schema: main
+      threads: 1

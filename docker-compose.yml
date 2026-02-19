@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  # --- CONTAINER 1: THE LISTENER ---
+  # Runs your Python script to capture MQTT data
+  logger:
+    build: ./ingestion
+    container_name: bambu_logger
+    restart: unless-stopped
+    volumes:
+      # CRITICAL: Maps the shared volume so both containers see the DB
+      - shared_data:/data
+      # Map config so you can edit it without rebuilding
+      - ./ingestion/config.json:/app/config.json
+
+  # --- CONTAINER 2: THE ORCHESTRATOR ---
+  # Runs Dagster + dbt to watch and transform the data
+  dagster:
+    build: ./orchestration
+    container_name: bambu_dagster
+    restart: unless-stopped
+    environment:
+      DAGSTER_HOME: /opt/dagster/dagster_home
+    volumes:
+      # 1. Access the SAME database file as the logger
+      - shared_data:/data
+      # 2. Access the dbt code so Dagster can run it
+      - ./transformation:/opt/dbt_project
+    ports:
+      - "3000:3000" # Access Dagster UI at localhost:3000
+
+volumes:
+  shared_data:
