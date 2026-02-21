@@ -18,6 +18,7 @@ venv/
 .DS_Store
 
 .claude
+CLAUDE.md
 
 # dbt build artifacts
 transformation/target/
