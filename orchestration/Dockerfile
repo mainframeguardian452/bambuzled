@@ -20,11 +20,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 # We copy the local 'my_dagster_project' code into the container
 COPY . .
 
-# 5. Setup Workspace
-# Create a minimalist workspace.yaml if one wasn't copied
-RUN echo "load_from: \n  - python_file: my_dagster_project/repo.py" > workspace.yaml
-
-# 6. Create a placeholder dagster.yaml (Critical for avoiding warnings)
+# 5. Create a placeholder dagster.yaml (Critical for avoiding warnings)
 RUN touch $DAGSTER_HOME/dagster.yaml
 
 # 7. Expose the UI Port

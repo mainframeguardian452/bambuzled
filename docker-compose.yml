@@ -1,20 +1,22 @@
 version: '3.8'
 
 services:
+
   # --- CONTAINER 1: THE LISTENER ---
-  # Runs your Python script to capture MQTT data
+  # Python script that subscribes to the Bambu MQTT feed and writes raw print
+  # job records to the shared SQLite database (the Bronze/Raw layer).
   logger:
     build: ./ingestion
     container_name: bambu_logger
     restart: unless-stopped
     volumes:
-      # CRITICAL: Maps the shared volume so both containers see the DB
       - shared_data:/data
-      # Map config so you can edit it without rebuilding
+      # Map config so credentials can be edited without rebuilding the image.
       - ./ingestion/config.json:/app/config.json
 
   # --- CONTAINER 2: THE ORCHESTRATOR ---
-  # Runs Dagster + dbt to watch and transform the data
+  # Dagster webserver + daemon.  The sensor polls the raw DB and triggers dbt
+  # whenever a new finished print job appears.  UI is at localhost:3000.
   dagster:
     build: ./orchestration
     container_name: bambu_dagster
@@ -22,12 +24,25 @@ services:
     environment:
       DAGSTER_HOME: /opt/dagster/dagster_home
     volumes:
-      # 1. Access the SAME database file as the logger
       - shared_data:/data
-      # 2. Access the dbt code so Dagster can run it
+      # Mount the dbt project so Dagster can shell out to dbt run.
       - ./transformation:/opt/dbt_project
     ports:
-      - "3000:3000" # Access Dagster UI at localhost:3000
+      - "3000:3000"
+
+  # --- CONTAINER 3: DBT DOCS ---
+  # Serves the dbt documentation UI on port 8080.
+  # On startup it attempts a full doc generation (needs a live DB); if the DB
+  # is not yet available it falls back to compile-only so the UI still loads.
+  dbt-docs:
+    build: ./transformation
+    container_name: bambu_dbt_docs
+    restart: unless-stopped
+    volumes:
+      - shared_data:/data
+      - ./transformation:/opt/dbt_project
+    ports:
+      - "8080:8080"
 
 volumes:
   shared_data:

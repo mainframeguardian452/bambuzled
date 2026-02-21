@@ -3,6 +3,13 @@ bambu_print_history:
   outputs:
     dev:
       type: sqlite
-      database: "/data/print_history.db" # The shared volume path
-      schema: main
       threads: 1
+      # 'database' is a logical identifier in dbt-sqlite 1.x (not a file path)
+      database: "print_history"
+      schema: main
+      # schemas_and_paths maps each schema name to its SQLite file.
+      # dbt-sqlite 1.x requires this field.
+      schemas_and_paths:
+        main: "/data/print_history.db"
+      # schema_directory is where dbt will create NEW schema files if needed.
+      schema_directory: "/data"

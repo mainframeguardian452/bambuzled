@@ -16,3 +16,9 @@ __pycache__/
 venv/
 .idea/
 .DS_Store
+
+.claude
+
+# dbt build artifacts
+transformation/target/
+transformation/.user.yml

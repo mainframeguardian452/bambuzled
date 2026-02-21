@@ -49,16 +49,16 @@ def init_db():
     try:
         conn = sqlite3.connect(DB_FILE)
         c = conn.cursor()
-        c.execute('''CREATE TABLE IF NOT EXISTS jobs
+        c.execute('''CREATE TABLE IF NOT EXISTS jobs_raw
                      (id INTEGER PRIMARY KEY AUTOINCREMENT,
-                      job_id TEXT UNIQUE, 
+                      job_id TEXT UNIQUE,
                       filename TEXT,
                       start_time TIMESTAMP,
                       end_time TIMESTAMP,
                       duration_minutes REAL,
                       status TEXT,
                       raw_json TEXT)''')
-        c.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_job_id ON jobs(job_id)")
+        c.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_job_id ON jobs_raw(job_id)")
         conn.commit()
         conn.close()
     except Exception as e:
@@ -98,8 +98,8 @@ def handle_print_start(data, raw_blob):
     c = conn.cursor()
     try:
         # Try to insert. If it exists, this will fail silently via IntegrityError
-        c.execute('''INSERT INTO jobs 
-                     (job_id, filename, start_time, status, raw_json) 
+        c.execute('''INSERT INTO jobs_raw
+                     (job_id, filename, start_time, status, raw_json)
                      VALUES (?, ?, ?, ?, ?)''',
                   (job_id, filename, start_dt, "RUNNING", raw_blob))
         conn.commit()
@@ -122,7 +122,7 @@ def handle_print_finish(data, raw_blob):
     c = conn.cursor()
     
     try:
-        c.execute("SELECT start_time, status FROM jobs WHERE job_id = ?", (job_id,))
+        c.execute("SELECT start_time, status FROM jobs_raw WHERE job_id = ?", (job_id,))
         row = c.fetchone()
         
         if row:
@@ -133,11 +133,11 @@ def handle_print_finish(data, raw_blob):
             start_dt = datetime.fromisoformat(row[0])
             duration = (end_dt - start_dt).total_seconds() / 60.0
             
-            c.execute('''UPDATE jobs SET 
-                         end_time = ?, 
-                         status = 'FINISH', 
-                         duration_minutes = ?, 
-                         raw_json = ? 
+            c.execute('''UPDATE jobs_raw SET
+                         end_time = ?,
+                         status = 'FINISH',
+                         duration_minutes = ?,
+                         raw_json = ?
                          WHERE job_id = ?''',
                       (end_dt, duration, raw_blob, job_id))
             conn.commit()
@@ -145,8 +145,8 @@ def handle_print_finish(data, raw_blob):
 
         else:
             # Log orphan finish
-            c.execute('''INSERT INTO jobs 
-                         (job_id, filename, start_time, end_time, status, raw_json) 
+            c.execute('''INSERT INTO jobs_raw
+                         (job_id, filename, start_time, end_time, status, raw_json)
                          VALUES (?, ?, datetime('now'), datetime('now'), 'FINISH', ?)''',
                       (job_id, filename, raw_blob))
             conn.commit()

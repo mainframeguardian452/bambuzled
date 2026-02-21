@@ -1,0 +1,29 @@
+version: 2
+
+sources:
+  - name: raw
+    schema: main
+    description: >
+      Raw layer: print job records captured directly from the Bambu MQTT
+      stream. This table is OLTP-style — records are inserted on RUNNING
+      and updated in-place on FINISH.
+    tables:
+      - name: jobs_raw
+        description: "One row per tracked print job, updated as the job progresses."
+        columns:
+          - name: id
+            description: "Auto-incremented primary key."
+          - name: job_id
+            description: "Stable identifier — cloud task ID or filename+timestamp fallback."
+          - name: filename
+            description: "Name of the .3mf print file."
+          - name: start_time
+            description: "Timestamp when the print started (RUNNING event)."
+          - name: end_time
+            description: "Timestamp when the print finished (FINISH event)."
+          - name: duration_minutes
+            description: "Total print duration in minutes."
+          - name: status
+            description: "Current state: RUNNING or FINISH."
+          - name: raw_json
+            description: "Full MQTT payload, preserved for debugging and future field extraction."
