@@ -10,7 +10,7 @@ services:
     container_name: bambu_logger
     restart: unless-stopped
     volumes:
-      - shared_data:/data
+      - /opt/data_prod:/data
       # Map config so credentials can be edited without rebuilding the image.
       - ./ingestion/config.json:/app/config.json
 
@@ -24,7 +24,7 @@ services:
     environment:
       DAGSTER_HOME: /opt/dagster/dagster_home
     volumes:
-      - shared_data:/data
+      - /opt/data_prod:/data
       # Mount the dbt project so Dagster can shell out to dbt run.
       - ./transformation:/opt/dbt_project
     ports:
@@ -39,10 +39,8 @@ services:
     container_name: bambu_dbt_docs
     restart: unless-stopped
     volumes:
-      - shared_data:/data
+      - /opt/data_prod:/data
       - ./transformation:/opt/dbt_project
     ports:
       - "8080:8080"
 
-volumes:
-  shared_data:
