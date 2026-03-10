@@ -16,7 +16,7 @@ Bambu Printer (MQTT over TLS)
 │  bambu_logger    │  Container 1 – Python MQTT listener
 │  (port: none)    │  Writes raw records to SQLite → Bronze / Raw layer
 └────────┬─────────┘
-         │ shared Docker volume (/data/print_history.db)
+         │ host bind mount /opt/data_prod/print_history.db
          ▼
 ┌──────────────────┐
 │  bambu_dagster   │  Container 2 – Dagster webserver + daemon
@@ -64,17 +64,27 @@ Edit `ingestion/config.json`:
 }
 ```
 
-### 2. Start the stack
+### 2. Create the data directory on the host
+
+The database is stored on the host machine at `/opt/data_prod` and bind-mounted
+into all containers. Create and permission the directory before starting the stack:
 
 ```bash
-docker compose up --build
+sudo mkdir -p /opt/data_prod
+sudo chown $USER:$USER /opt/data_prod
+```
+
+### 3. Start the stack
+
+```bash
+docker compose up -d --build
 ```
 
 All three containers will start. The logger begins listening immediately;
 Dagster and the dbt docs server are available at their respective ports within
 a few seconds of startup.
 
-### 3. Trigger a dbt run manually (optional)
+### 4. Trigger a dbt run manually (optional)
 
 From the Dagster UI at `localhost:3000`, navigate to **Jobs → transform_print_history**
 and click **Materialize**. Alternatively, let the `new_print_job_sensor` fire
@@ -106,6 +116,25 @@ Bambuzled/
         ├── sources.yml         # Declares the raw 'jobs' table as a source
         └── bronze/
             └── jobs_brz.sql            # Bronze model: completed job history
+```
+
+---
+
+## Accessing the Database from a Local Machine
+
+The database lives at `/opt/data_prod/print_history.db` on the host VM. Since
+SQLite is file-based, the simplest way to query it from a local Windows machine
+is to copy it down via SCP and open it in [DB Browser for SQLite](https://sqlitebrowser.org):
+
+```powershell
+scp user@your-vm-ip:/opt/data_prod/print_history.db C:\Users\USERNAME\Documents\print_history.db
+```
+
+To pull a fresh copy and open it in one step, save the following as `sync_db.ps1`:
+
+```powershell
+scp user@your-vm-ip:/opt/data_prod/print_history.db C:\Users\USERNAME\Documents\print_history.db
+Start-Process "C:\Program Files\DB Browser for SQLite\DB Browser for SQLite.exe" "C:\Users\USERNAME\Documents\print_history.db"
 ```
 
 ---
